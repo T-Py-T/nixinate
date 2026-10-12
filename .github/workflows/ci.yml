@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-checks:
+    name: Flake checks (eval + scripts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run fast flake checks
+        run: |
+          set -euo pipefail
+          checks=(
+            eval-generateApps-filters-machines
+            eval-generateApps-dry-run-app
+            eval-generateApps-dry-run-uses-dry-activate
+            script-local-deploy
+            script-remote-hermetic-deploy
+            script-remote-nonhermetic-deploy
+          )
+          for check in "${checks[@]}"; do
+            echo "Building checks.x86_64-linux.$check"
+            nix build -L ".#checks.x86_64-linux.$check"
+          done
+
+  vm-checks:
+    name: Flake checks (VM integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Run VM flake checks
+        run: |
+          set -euo pipefail
+          checks=(
+            vmTestLocal
+            vmTestRemote
+            vmTestLocalHermetic
+            vmTestRemoteHermetic
+          )
+          for check in "${checks[@]}"; do
+            echo "Building checks.x86_64-linux.$check"
+            nix build -L ".#checks.x86_64-linux.$check"
+          done

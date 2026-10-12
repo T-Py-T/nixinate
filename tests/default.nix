@@ -1,7 +1,9 @@
-{ pkgs, makeTest, inputs }:
-{
-  vmTestLocal = (import ./vmTest { inherit pkgs makeTest inputs; }).local;
-  vmTestRemote = (import ./vmTest { inherit pkgs makeTest inputs; }).remote;
-  vmTestLocalHermetic = (import ./vmTest { inherit pkgs makeTest inputs; }).localHermetic;
-  vmTestRemoteHermetic = (import ./vmTest { inherit pkgs makeTest inputs; }).remoteHermetic;
-}
+{ pkgs, makeTest, inputs, self }:
+let
+  vmTests = import ./vmTest { inherit pkgs makeTest inputs; };
+  evalTests = import ./eval.nix { inherit pkgs self; lib = pkgs.lib; };
+  scriptTests = import ./scripts.nix { inherit pkgs self; lib = pkgs.lib; };
+in
+vmTests
+// evalTests
+// scriptTests
