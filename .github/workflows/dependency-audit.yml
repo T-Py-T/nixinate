@@ -1,0 +1,59 @@
+name: Dependency audit
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  schedule:
+    - cron: "0 12 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flake-lock:
+    name: flake.lock freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check input age
+        env:
+          MAX_AGE_DAYS: "90"
+        run: |
+          chmod +x scripts/check-flake-lock-staleness.sh
+          ./scripts/check-flake-lock-staleness.sh
+
+  nix-eval-smoke:
+    name: Nix flake eval smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: DeterminateSystems/nix-installer-action@5b21e92bf3ded1aa38470082b27f94d982bb7c13 # v16.0.0
+      - name: Eval flake outputs
+        run: |
+          chmod +x scripts/nix-flake-eval-smoke.sh
+          ./scripts/nix-flake-eval-smoke.sh
+
+  devenv-pins:
+    name: Audit tooling flake
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: DeterminateSystems/nix-installer-action@5b21e92bf3ded1aa38470082b27f94d982bb7c13 # v16.0.0
+      - name: Verify tools/devenv flake
+        working-directory: tools/devenv
+        run: |
+          nix flake check --no-build
+          nix build .#packages.x86_64-linux.default
+
+  dependency-review:
+    name: GitHub dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/dependency-review-action@3b139cfc5fae8b618d3eae3675e383bb176dcf69 # v4.5.0
