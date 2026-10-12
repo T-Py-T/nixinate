@@ -2,14 +2,18 @@
 # configuration which is required to perform the test.
 {
   config = {
-    nix.trustedUsers = [ "nixinator" ];
-    security.sudo.extraRules = [{
-      users = [ "nixinator" ];
-      commands = [{
-        command = "ALL";
-        options = [ "NOPASSWD" ];
-      }];
-    }];
+    nix.settings.trusted-users = [ "nixinator" ];
+    security.sudo.extraRules = [
+      {
+        users = [ "nixinator" ];
+        commands = [
+          {
+            command = "ALL";
+            options = [ "NOPASSWD" ];
+          }
+        ];
+      }
+    ];
     users = {
       mutableUsers = false;
       users = {
@@ -26,7 +30,5 @@
       enable = true;
       extraConfig = "PermitEmptyPasswords yes";
     };
-    documentation.enable = false;
-    boot.loader.grub.enable = false;
   };
 }
