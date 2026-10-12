@@ -14,16 +14,20 @@ let
     let
       apps = generateApps flake;
       scriptPath = apps.nixinate.${machine}.program;
+      patternFiles = lib.imap1 (
+        i: pattern:
+          pkgs.writeText "pattern-${toString i}" pattern
+      ) patterns;
     in
     pkgs.runCommand name { } ''
       set -e
       ${lib.concatMapStringsSep "\n" (
-        pattern:
-          ''if ! grep -Fq ${pkgs.writeText "pattern" pattern} ${scriptPath}; then
-            echo "deploy script missing expected pattern: ${pattern}" >&2
+        patternFile:
+          ''if ! grep -Fq ${patternFile} ${scriptPath}; then
+            echo "deploy script missing expected pattern in $(cat ${patternFile})" >&2
             exit 1
           fi''
-      ) patterns}
+      ) patternFiles}
       touch $out
     '';
 
