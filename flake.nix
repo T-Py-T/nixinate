@@ -16,10 +16,12 @@
     {
       herculesCI.ciSystems = [ "x86_64-linux" ];
       overlay = final: prev: {
-        nixinate = {
+        nixinate = let
           nix = prev.pkgs.writeShellScriptBin "nix"
             ''${final.nixVersions.unstable}/bin/nix --experimental-features "nix-command flakes" "$@"'';
-          nixos-rebuild = prev.nixos-rebuild.override { inherit (final) nix; };
+        in {
+          inherit nix;
+          nixos-rebuild = prev.nixos-rebuild.override { inherit nix; };
         };
         generateApps = flake:
           let
@@ -28,8 +30,8 @@
             mkDeployScript = { machine, dryRun }: let
               inherit (builtins) abort;
               inherit (final.lib) getExe optionalString concatStringsSep;
-              nix = "${getExe final.nix}";
-              nixos-rebuild = "${getExe final.nixos-rebuild}";
+              nix = "${getExe final.nixinate.nix}";
+              nixos-rebuild = "${getExe final.nixinate.nixos-rebuild}";
               openssh = "${getExe final.openssh}";
               flock = "${getExe final.flock}";
 
@@ -105,9 +107,7 @@
         in
         pkgs.lib.optionalAttrs pkgs.stdenv.isLinux vmTests # vmTests can only be ran on Linux, so append them only if on Linux.
         //
-        {
-          # Other checks here...
-        }
+        import ./tests/regression { pkgs = nixpkgsFor.${system}; inherit self; }
       );
     };
 }
