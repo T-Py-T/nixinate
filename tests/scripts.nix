@@ -66,12 +66,12 @@ let
 in
 {
   script-local-deploy = scriptMustMatch "script-local-deploy" localFlake "localMachine" [
-    "Building system closure locally"
+    "Building system closure locally, copying it to remote store and activating it"
     "--target-host ops@local.example.com"
     "--use-remote-sudo"
     "-s"
     "--option connect-timeout 5"
-    nixinateNix
+    "${lib.getExe pkgs.nixinate.nixos-rebuild}"
   ];
 
   script-remote-hermetic-deploy = scriptMustMatch "script-remote-hermetic-deploy" remoteHermeticFlake
