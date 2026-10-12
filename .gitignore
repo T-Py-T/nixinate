@@ -2,9 +2,8 @@
 # accidentally.
 *result*
 
-# Github Workflows are not what we use to perform CI, we use Hercules-CI
-# instead.
-.github/workflows
+# Hercules CI remains the primary integration path; GitHub Actions runs the same
+# flake checks for forks and pull-request visibility.
 
 # Dockerfiles, or docker-compose files are not how we build or deploy software.
 # Only Nix expressions are allowed.
