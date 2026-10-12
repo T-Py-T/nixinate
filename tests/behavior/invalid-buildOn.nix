@@ -1,5 +1,5 @@
 # Invalid buildOn must fail when deploy scripts are materialised (abort in mkDeployScript).
-{ pkgs, self, repo }:
+{ pkgs, self, repo, ... }:
 let
   system = pkgs.hostPlatform.system;
 
