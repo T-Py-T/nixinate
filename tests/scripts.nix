@@ -23,7 +23,7 @@ let
       set -e
       ${lib.concatMapStringsSep "\n" (
         patternFile:
-          ''if ! grep -Fq ${patternFile} ${scriptPath}; then
+          ''if ! grep -Fq -- "$(cat ${patternFile})" ${scriptPath}; then
             echo "deploy script missing expected pattern in $(cat ${patternFile})" >&2
             exit 1
           fi''
