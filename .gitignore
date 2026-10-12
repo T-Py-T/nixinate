@@ -2,10 +2,6 @@
 # accidentally.
 *result*
 
-# Github Workflows are not what we use to perform CI, we use Hercules-CI
-# instead.
-.github/workflows
-
 # Dockerfiles, or docker-compose files are not how we build or deploy software.
 # Only Nix expressions are allowed.
 *Dockerfile*
