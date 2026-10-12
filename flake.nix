@@ -24,7 +24,10 @@
         generateApps = flake:
           let
             machines = builtins.attrNames flake.nixosConfigurations;
-            validMachines = final.lib.remove "" (final.lib.forEach machines (x: final.lib.optionalString (flake.nixosConfigurations."${x}"._module.args ? nixinate) "${x}" ));
+            isNixinateMachine = machine:
+              let cfg = flake.nixosConfigurations.${machine};
+              in cfg ? _module && cfg._module ? args && cfg._module.args ? nixinate;
+            validMachines = final.lib.filter isNixinateMachine machines;
             mkDeployScript = { machine, dryRun }: let
               inherit (builtins) abort;
               inherit (final.lib) getExe optionalString concatStringsSep;
@@ -58,7 +61,7 @@
                 ( set -x; ${openssh} $NIX_SSHOPTS -t ${user}@${host} "sudo nix-store --realise ${nixos-rebuild} ${flock} && sudo ${flock} -w 60 /dev/shm/nixinate-${machine} ${nixos-rebuild} ${nixOptions} ${switch} --flake ${flake}#${machine}" )
               '' else ''
                 echo "🤞 Activating configuration non-hermetically on ${machine} via ssh:"
-                ( set -x; ${openssh} $NIX_SSHOPTS -t ${user}@${host} "sudo flock -w 60 /dev/shm/nixinate-${machine} nixos-rebuild ${switch} --flake ${flake}#${machine}" )
+                ( set -x; ${openssh} $NIX_SSHOPTS -t ${user}@${host} "sudo flock -w 60 /dev/shm/nixinate-${machine} nixos-rebuild ${nixOptions} ${switch} --flake ${flake}#${machine}" )
               '')
               else ''
                 echo "🔨 Building system closure locally, copying it to remote store and activating it:"
@@ -105,9 +108,7 @@
         in
         pkgs.lib.optionalAttrs pkgs.stdenv.isLinux vmTests # vmTests can only be ran on Linux, so append them only if on Linux.
         //
-        {
-          # Other checks here...
-        }
+        import ./tests/bugfix { pkgs = nixpkgsFor.${system}; inherit self; }
       );
     };
 }
