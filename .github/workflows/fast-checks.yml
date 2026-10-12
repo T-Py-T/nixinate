@@ -1,0 +1,22 @@
+name: Fast checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: fast-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval-and-script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Run fast checks (no VM)
+        run: nix build -L -f tests/fast/package.nix --no-link
